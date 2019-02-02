@@ -117,11 +117,20 @@ module.exports = async () => {
   }
 
   serverCompiler.watch({ 'info-verbosity': 'none' }, (error, stats) => {
-    if (serverProcess && !error && !stats.hasErrors()) {
-      // If all is good, send our hot client entry a message to trigger HMR
-      send({ stats }).then(() => listener({ stats }));
-    } else {
-      listener({ stats });
+    // If the spawned server process has died, start a new one
+    if (serverProcess && serverProcess.exitCode !== null) {
+      startServerProcess();
+    }
+    // If it's alive, send it a message to trigger HMR
+    else {
+      // If there are no errors and the server can be refreshed:
+      // Wait for server to be ready before sending a signal
+      if (serverProcess && !error && !stats.hasErrors()) {
+        send({ stats }).then(() => listener({ stats }));
+      } else {
+        // Otherwise, just send the signal immediately
+        listener({ stats });
+      }
     }
   });
 
@@ -130,6 +139,7 @@ module.exports = async () => {
   const host = '0.0.0.0';
 
   let listener = () => {};
+  let output = () => {};
 
   // Start up webpack dev server
   const devServer = await createDevServer(clientCompiler, serverCompiler, {
@@ -137,6 +147,7 @@ module.exports = async () => {
     port: project.servers.cdn.port,
     host,
     callback: cb => (listener = cb),
+    output: cb => (output = cb),
   });
 
   // Start up webpack dev server
@@ -173,6 +184,14 @@ module.exports = async () => {
 
     serverProcess.stdout.pipe(serverLogPrefixer()).pipe(process.stdout);
     serverProcess.stderr.pipe(serverLogPrefixer()).pipe(process.stderr);
+
+    serverProcess.stdout.on('data', buffer => {
+      output({ str: buffer.toString() });
+    });
+
+    serverProcess.stderr.on('data', buffer => {
+      output({ str: buffer.toString() });
+    });
 
     serverProcess.on('message', async ({ success }) => {
       if (!success) {

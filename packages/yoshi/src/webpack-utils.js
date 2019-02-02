@@ -159,7 +159,7 @@ function overrideRules(rules, patch) {
 function createDevServer(
   clientCompiler,
   serverCompiler,
-  { publicPath, https, host, callback },
+  { publicPath, https, host, callback, output },
 ) {
   return new WebpackDevServer(clientCompiler, {
     // Enable gzip compression for everything served
@@ -184,6 +184,7 @@ function createDevServer(
         clientCompiler,
         serverCompiler,
         callback,
+        output,
       });
       // This lets us fetch source contents from webpack for the error overlay
       // app.use(evalSourceMapMiddleware(server));

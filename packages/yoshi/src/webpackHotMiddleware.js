@@ -9,7 +9,7 @@ const STATS = {
   errorDetails: false,
 };
 
-module.exports = function(server, { clientCompiler, callback }) {
+module.exports = function(server, { clientCompiler, callback, output }) {
   // const { done } = serverCompiler.hooks;
 
   // done.tap('webpack-hot-middleware', stats => {
@@ -34,5 +34,11 @@ module.exports = function(server, { clientCompiler, callback }) {
     } else {
       server.sockWrite(server.sockets, 'ok');
     }
+  });
+
+  output(({ str }) => {
+    setTimeout(() => {
+      server.sockWrite(server.sockets, 'output', str);
+    }, 1000);
   });
 };

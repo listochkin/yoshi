@@ -176,8 +176,6 @@ function handleAvailableHash(hash) {
 connection.onmessage = function(event) {
   const message = JSON.parse(event.data);
 
-  console.log(message);
-
   switch (message.type) {
     case 'hash':
       handleAvailableHash(message.data);
@@ -196,8 +194,12 @@ connection.onmessage = function(event) {
     case 'errors':
       handleErrors(message.data);
       break;
-    case 'server-errors':
-      handleErrors(message.data);
+    case 'output':
+      console.log(
+        `%c[SERVER] %c${message.data.replace(/\n$/, '')}`,
+        'color: green',
+        'color: black',
+      );
       break;
     default:
     // Do nothing.
