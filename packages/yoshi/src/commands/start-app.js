@@ -20,7 +20,7 @@ const fs = require('fs-extra');
 const stream = require('stream');
 const child_process = require('child_process');
 const chalk = require('chalk');
-const webpack = require('webpack');
+const waitPort = require('wait-port');
 const openBrowser = require('react-dev-utils/openBrowser');
 const chokidar = require('chokidar');
 const project = require('yoshi-config');
@@ -106,11 +106,22 @@ module.exports = async () => {
 
   // Start up server compilation
   let serverProcess;
+  let response;
+
+  async function send({ stats }) {
+    serverProcess.send({});
+
+    return new Promise((resolve, reject) => {
+      response = { resolve, reject, stats };
+    });
+  }
 
   serverCompiler.watch({ 'info-verbosity': 'none' }, (error, stats) => {
     if (serverProcess && !error && !stats.hasErrors()) {
       // If all is good, send our hot client entry a message to trigger HMR
-      serverProcess.send({});
+      send({ stats }).then(() => listener({ stats }));
+    } else {
+      listener({ stats });
     }
   });
 
@@ -118,19 +129,20 @@ module.exports = async () => {
 
   const host = '0.0.0.0';
 
+  let listener = () => {};
+
   // Start up webpack dev server
-  const devServer = await createDevServer(clientCompiler, {
+  const devServer = await createDevServer(clientCompiler, serverCompiler, {
     publicPath: clientConfig.output.publicPath,
     port: project.servers.cdn.port,
     host,
+    callback: cb => (listener = cb),
   });
 
   // Start up webpack dev server
   await new Promise((resolve, reject) => {
-    devServer.listen(
-      project.servers.cdn.port,
-      host,
-      err => (err ? reject(err) : resolve(devServer)),
+    devServer.listen(project.servers.cdn.port, host, err =>
+      err ? reject(err) : resolve(devServer),
     );
   });
 
@@ -162,9 +174,30 @@ module.exports = async () => {
     serverProcess.stdout.pipe(serverLogPrefixer()).pipe(process.stdout);
     serverProcess.stderr.pipe(serverLogPrefixer()).pipe(process.stderr);
 
-    serverProcess.on('message', () => {
-      serverProcess.kill();
-      startServerProcess();
+    serverProcess.on('message', async ({ success }) => {
+      if (!success) {
+        serverProcess.kill();
+
+        await new Promise(resolve =>
+          setInterval(() => {
+            if (serverProcess.killed) {
+              resolve();
+            }
+          }, 100),
+        );
+
+        startServerProcess();
+
+        waitPort({
+          port: PORT,
+          output: 'silent',
+          timeout: 20000,
+        }).then(() => {
+          response.resolve({ stats: response.stats });
+        });
+      } else {
+        response.resolve({ stats: response.stats });
+      }
     });
   };
 

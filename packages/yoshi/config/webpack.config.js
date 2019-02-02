@@ -36,7 +36,7 @@ const {
   getProjectArtifactId,
   createBabelConfig,
 } = require('yoshi-helpers');
-const { addEntry } = require('../src/webpack-utils');
+const { addEntry, overrideRules } = require('../src/webpack-utils');
 
 const reScript = /\.js?$/;
 const reStyle = /\.(css|less|scss|sass)$/;
@@ -113,24 +113,8 @@ const entry = project.entry || project.defaultEntry;
 
 const possibleServerEntries = ['./server', '../test/dev-server'];
 
-function overrideRules(rules, patch) {
-  return rules.map(ruleToPatch => {
-    let rule = patch(ruleToPatch);
-    if (rule.rules) {
-      rule = { ...rule, rules: overrideRules(rule.rules, patch) };
-    }
-    if (rule.oneOf) {
-      rule = { ...rule, oneOf: overrideRules(rule.oneOf, patch) };
-    }
-    if (rule.use) {
-      rule = { ...rule, use: overrideRules(rule.use, patch) };
-    }
-    return rule;
-  });
-}
-
 // Common function to get style loaders
-const getStyleLoaders = ({
+function getStyleLoaders({
   embedCss,
   isDebug,
 
@@ -138,7 +122,7 @@ const getStyleLoaders = ({
   separateCss = computedSeparateCss,
   hmr = project.hmr,
   tpaStyle = project.tpaStyle,
-}) => {
+}) {
   const cssLoaderOptions = {
     camelCase: true,
     sourceMap: !!separateCss,
@@ -270,7 +254,7 @@ const getStyleLoaders = ({
       ],
     },
   ];
-};
+}
 
 //
 // Common configuration chunk to be used for both
@@ -708,8 +692,9 @@ function createClientWebpackConfig({
 
   if (isHmr) {
     addEntry(clientConfig, [
-      require.resolve('webpack/hot/dev-server'),
-      require.resolve('webpack-dev-server/client'),
+      require.resolve('./hotDevClient') + '?devServerUrl=http://localhost:3200',
+      // require.resolve('webpack/hot/dev-server'),
+      // require.resolve('webpack-dev-server/client'),
     ]);
   }
 

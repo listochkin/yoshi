@@ -51,6 +51,7 @@
     "preset": "jest-yoshi-preset"
   },
   "yoshi": {
+    "experimentalServerBundle": true,
     "externals": {
       "react": "React",
       "react-dom": "ReactDOM"
