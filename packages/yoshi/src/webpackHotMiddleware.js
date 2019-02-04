@@ -9,7 +9,7 @@ const STATS = {
   errorDetails: false,
 };
 
-module.exports = function(server, { clientCompiler, callback, output }) {
+module.exports = function(server, { callback, output }) {
   // const { done } = serverCompiler.hooks;
 
   // done.tap('webpack-hot-middleware', stats => {

@@ -158,7 +158,6 @@ function overrideRules(rules, patch) {
 
 function createDevServer(
   clientCompiler,
-  serverCompiler,
   { publicPath, https, host, callback, output },
 ) {
   return new WebpackDevServer(clientCompiler, {
@@ -181,8 +180,6 @@ function createDevServer(
       app.use(redirectMiddleware(host, project.servers.cdn.port));
       // Custom hot middlware
       webpackHotMiddleware(server, {
-        clientCompiler,
-        serverCompiler,
         callback,
         output,
       });

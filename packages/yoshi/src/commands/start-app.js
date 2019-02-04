@@ -142,7 +142,7 @@ module.exports = async () => {
   let output = () => {};
 
   // Start up webpack dev server
-  const devServer = await createDevServer(clientCompiler, serverCompiler, {
+  const devServer = await createDevServer(clientCompiler, {
     publicPath: clientConfig.output.publicPath,
     port: project.servers.cdn.port,
     host,

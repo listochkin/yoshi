@@ -25,8 +25,6 @@ export default hot(module, (app, context) => {
 
   // Define a route to render our initial HTML.
   app.get('/', (req, res) => {
-    console.log('getting a request');
-
     // Extract some data from every incoming request.
     const renderModel = getRenderModel(req);
 
