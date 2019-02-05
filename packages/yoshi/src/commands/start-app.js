@@ -22,6 +22,7 @@ const child_process = require('child_process');
 const chalk = require('chalk');
 const waitPort = require('wait-port');
 const openBrowser = require('react-dev-utils/openBrowser');
+const launchEditor = require('react-dev-utils/launchEditor');
 const chokidar = require('chokidar');
 const project = require('yoshi-config');
 const {
@@ -234,6 +235,29 @@ module.exports = async () => {
 
   // Once it started, open up the browser
   openBrowser(`http://localhost:${PORT}`);
+
+  console.log(
+    `  Press ${chalk.cyan('e')} to open this project on your favorite editor`,
+  );
+  console.log();
+
+  const stdin = process.stdin;
+
+  stdin.setRawMode(true);
+
+  stdin.resume();
+
+  stdin.setEncoding('utf8');
+
+  stdin.on('data', key => {
+    if (key === '\u0003') {
+      serverProcess.kill();
+      devServer.close();
+      process.exit();
+    } else if (key === 'e') {
+      launchEditor(process.cwd(), 1, 1);
+    }
+  });
 
   return {
     persistent: true,
