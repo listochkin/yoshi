@@ -12,6 +12,7 @@ const generateProject = require('./generateProject');
 const verifyRegistry = require('./verifyRegistry');
 const verifyMinimumNodeVersion = require('yoshi-helpers/verifyMinimumNodeVersion');
 const { minimumNodeVersion } = require('./constants');
+const execa = require('execa');
 
 module.exports = async (workingDir, projectDirName) => {
   verifyWorkingDirectory(workingDir);
@@ -39,7 +40,15 @@ module.exports = async (workingDir, projectDirName) => {
     gitInit(workingDir);
   }
 
+  const before = new Date();
   install(workingDir);
+  const after = new Date();
+  console.log(`it took ${after - before} ms to install`);
+  console.log('the size of the node_modules dir is');
+  execa.shellSync('du -sh node_modules', {
+    cwd: workingDir,
+    stdio: 'inherit',
+  });
   lintFix(workingDir);
 
   console.log(
