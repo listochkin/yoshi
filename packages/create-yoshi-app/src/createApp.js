@@ -44,11 +44,27 @@ module.exports = async (workingDir, projectDirName) => {
   install(workingDir);
   const after = new Date();
   console.log(`it took ${after - before} ms to install`);
+
   console.log('the size of the node_modules dir is');
   execa.shellSync('du -sh node_modules', {
     cwd: workingDir,
     stdio: 'inherit',
   });
+
+  console.log(
+    `let's check if there's an npm-shrinkwrap.json file in the yoshi directory`,
+  );
+  execa.shellSync('ls node_modules/yoshi/npm-shrinkwrap.json', {
+    cwd: workingDir,
+    stdio: 'inherit',
+  });
+
+  console.log('the size of the yoshi internal node_modules dir is');
+  execa.shellSync('du -sh node_modules/yoshi/node_modules', {
+    cwd: workingDir,
+    stdio: 'inherit',
+  });
+
   lintFix(workingDir);
 
   console.log(
