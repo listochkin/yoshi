@@ -1,7 +1,6 @@
 const cors = require('cors');
 const chalk = require('chalk');
 const webpack = require('webpack');
-const waitPort = require('wait-port');
 const clearConsole = require('react-dev-utils/clearConsole');
 const { prepareUrls } = require('react-dev-utils/WebpackDevServerUtils');
 const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
@@ -11,9 +10,9 @@ const { STATICS_DIR } = require('yoshi-config/paths');
 const { PORT } = require('./constants');
 const { redirectMiddleware } = require('../src/tasks/cdn/server-api');
 const WebpackDevServer = require('webpack-dev-server');
-const errorOverlayMiddleware = require('react-dev-utils/errorOverlayMiddleware');
-const evalSourceMapMiddleware = require('react-dev-utils/evalSourceMapMiddleware');
-const webpackHotMiddleware = require('./webpackHotMiddleware');
+// const errorOverlayMiddleware = require('react-dev-utils/errorOverlayMiddleware');
+// const evalSourceMapMiddleware = require('react-dev-utils/evalSourceMapMiddleware');
+// const webpackHotMiddleware = require('./webpackHotMiddleware');
 
 const isInteractive = process.stdout.isTTY;
 
@@ -32,14 +31,14 @@ function createCompiler(config, { https }) {
 
   compiler.hooks.invalid.tap('recompile-log', () => {
     if (isInteractive) {
-      clearConsole();
+      // clearConsole();
     }
     console.log('Compiling...');
   });
 
   compiler.hooks.done.tap('finished-log', stats => {
     if (isInteractive) {
-      clearConsole();
+      // clearConsole();
     }
 
     const messages = formatWebpackMessages(stats.toJson({}, true));
@@ -156,11 +155,8 @@ function overrideRules(rules, patch) {
   });
 }
 
-function createDevServer(
-  clientCompiler,
-  { publicPath, https, host, callback },
-) {
-  return new WebpackDevServer(clientCompiler, {
+function createDevServer(clientCompiler, { publicPath, https, host }) {
+  const devServer = new WebpackDevServer(clientCompiler, {
     // Enable gzip compression for everything served
     compress: true,
     clientLogLevel: 'error',
@@ -173,15 +169,11 @@ function createDevServer(
     // The server should be accessible externally
     host,
     overlay: false,
-    before(app, server) {
+    before(app) {
       // Send cross origin headers
       app.use(cors());
       // Redirect `.min.(js|css)` to `.(js|css)`
       app.use(redirectMiddleware(host, project.servers.cdn.port));
-      // Custom hot middlware
-      webpackHotMiddleware(server, {
-        callback,
-      });
       // This lets us fetch source contents from webpack for the error overlay
       // app.use(evalSourceMapMiddleware(server));
       // This lets us open files from the runtime error overlay.
@@ -194,31 +186,14 @@ function createDevServer(
       });
     },
   });
-}
 
-async function waitForServerToStart({ server }) {
-  const portFound = await waitPort({
-    port: PORT,
-    output: 'silent',
-    timeout: 20000,
-  });
+  // Update sockets with new stats, we use the sockWrite() method
+  // to update the hot client with server data
+  devServer.send = (...args) => {
+    return devServer.sockWrite(devServer.sockets, ...args);
+  };
 
-  if (!portFound) {
-    console.log(
-      chalk.red(
-        `\nCouldn't find a server running on port ${chalk.bold(PORT)}.`,
-      ),
-    );
-    console.log(
-      chalk.red(
-        `Please make sure "${chalk.bold(
-          server,
-        )}" sets up a server on this port.\n`,
-      ),
-    );
-    console.log(chalk.red('Aborting'));
-    process.exit(1);
-  }
+  return devServer;
 }
 
 function waitForCompilation(compiler) {
@@ -232,7 +207,6 @@ function waitForCompilation(compiler) {
 module.exports = {
   createDevServer,
   createCompiler,
-  waitForServerToStart,
   waitForCompilation,
   addEntry,
   overrideRules,

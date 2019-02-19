@@ -35,10 +35,11 @@ const {
 const {
   createCompiler,
   createDevServer,
-  waitForServerToStart,
   waitForCompilation,
 } = require('../webpack-utils');
 const Server = require('./utils/runServer');
+
+const host = '0.0.0.0';
 
 const https = cliArgs.https || project.servers.cdn.ssl;
 
@@ -93,40 +94,48 @@ module.exports = async () => {
 
   const [clientCompiler, serverCompiler] = multiCompiler.compilers;
 
-  // Start up server compilation
-  let serverProcess;
-
-  serverCompiler.watch({ 'info-verbosity': 'none' }, (error, stats) => {
-    // If the spawned server process has died, start a new one
-    if (serverProcess && serverProcess.child.exitCode !== null) {
-      serverProcess.restart();
-    }
-    // If it's alive, send it a message to trigger HMR
-    else {
-      // If there are no errors and the server can be refreshed:
-      // Wait for server to be ready before sending a signal
-      if (serverProcess && !error && !stats.hasErrors()) {
-        serverProcess.send({}).then(() => listener({ stats }));
-      } else {
-        // Otherwise, just send the signal immediately
-        listener({ stats });
-      }
-    }
-  });
-
-  console.log(chalk.cyan('Starting development environment...\n'));
-
-  const host = '0.0.0.0';
-
-  let listener = () => {};
+  // Start up server process
+  const serverProcess = new Server({ serverFilePath: cliArgs.server });
 
   // Start up webpack dev server
   const devServer = await createDevServer(clientCompiler, {
     publicPath: clientConfig.output.publicPath,
     port: project.servers.cdn.port,
     host,
-    callback: cb => (listener = cb),
   });
+
+  serverCompiler.watch({ 'info-verbosity': 'none' }, async (error, stats) => {
+    // If the spawned server process has died, start a new one
+    if (serverProcess.child && serverProcess.child.exitCode !== null) {
+      await serverProcess.restart();
+    }
+    // If it's alive, send it a message to trigger HMR
+    else {
+      const jsonStats = stats.toJson();
+
+      // If there are no errors and the server can be refreshed:
+      // Wait for server to be ready before sending a signal
+      if (serverProcess.child && !error && !stats.hasErrors()) {
+        const { success } = await serverProcess.send({});
+
+        if (!success) {
+          await serverProcess.restart();
+        }
+
+        await devServer.send('hash', jsonStats.hash);
+        await devServer.send('ok');
+      } else {
+        // Otherwise, just send the signal immediately
+        if (jsonStats.errors.length > 0) {
+          await devServer.send('errors', jsonStats.errors);
+        } else if (jsonStats.warnings.length > 0) {
+          await devServer.send('warnings', jsonStats.warnings);
+        }
+      }
+    }
+  });
+
+  console.log(chalk.cyan('Starting development environment...\n'));
 
   // Start up webpack dev server
   await new Promise((resolve, reject) => {
@@ -144,18 +153,30 @@ module.exports = async () => {
     process.exit(1);
   }
 
-  serverProcess = new Server({ serverFilePath: cliArgs.server });
-
   ['SIGINT', 'SIGTERM'].forEach(sig => {
     process.on(sig, () => {
-      // serverProcess.kill();
       serverProcess.end();
       devServer.close();
       process.exit();
     });
   });
 
-  await waitForServerToStart({ server: cliArgs.server });
+  try {
+    await serverProcess.initialize();
+  } catch (error) {
+    console.log();
+    console.log(
+      chalk.red(`Couldn't find a server running on port ${chalk.bold(PORT)}.`),
+    );
+    console.log(
+      chalk.red(
+        `Please check ${chalk.bold(cliArgs.server)} starts on this port.`,
+      ),
+    );
+    console.log();
+    console.log(chalk.red('Aborting'));
+    process.exit(1);
+  }
 
   // Once it started, open up the browser
   openBrowser(`http://localhost:${PORT}`);

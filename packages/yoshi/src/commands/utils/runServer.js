@@ -1,5 +1,6 @@
 const chalk = require('chalk');
 const stream = require('stream');
+const waitPort = require('wait-port');
 const child_process = require('child_process');
 const { PORT } = require('../../constants');
 
@@ -17,11 +18,9 @@ const inspectArg = process.argv.find(arg => arg.includes('--debug'));
 module.exports = class Server {
   constructor({ serverFilePath }) {
     this.serverFilePath = serverFilePath;
-
-    this.initialize();
   }
 
-  initialize() {
+  async initialize() {
     this.child = child_process.fork(this.serverFilePath, {
       stdio: 'pipe',
       execArgv: [inspectArg]
@@ -38,10 +37,16 @@ module.exports = class Server {
     this.child.stderr.pipe(serverLogPrefixer()).pipe(process.stderr);
 
     this.child.on('message', this.onMessage.bind(this));
+
+    await waitPort({
+      port: PORT,
+      output: 'silent',
+      timeout: 20000,
+    });
   }
 
   onMessage(response) {
-    response.success ? this._resolve(response) : this._reject(response);
+    this._resolve(response);
   }
 
   end() {
@@ -68,6 +73,6 @@ module.exports = class Server {
       }, 100),
     );
 
-    this.initialize();
+    await this.initialize();
   }
 };
