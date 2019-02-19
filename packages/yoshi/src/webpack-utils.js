@@ -31,14 +31,14 @@ function createCompiler(config, { https }) {
 
   compiler.hooks.invalid.tap('recompile-log', () => {
     if (isInteractive) {
-      // clearConsole();
+      clearConsole();
     }
     console.log('Compiling...');
   });
 
   compiler.hooks.done.tap('finished-log', stats => {
     if (isInteractive) {
-      // clearConsole();
+      clearConsole();
     }
 
     const messages = formatWebpackMessages(stats.toJson({}, true));
