@@ -10,8 +10,6 @@ const { STATICS_DIR } = require('yoshi-config/paths');
 const { PORT } = require('./constants');
 const { redirectMiddleware } = require('../src/tasks/cdn/server-api');
 const WebpackDevServer = require('webpack-dev-server');
-// const errorOverlayMiddleware = require('react-dev-utils/errorOverlayMiddleware');
-// const evalSourceMapMiddleware = require('react-dev-utils/evalSourceMapMiddleware');
 
 const isInteractive = process.stdout.isTTY;
 
@@ -173,10 +171,6 @@ function createDevServer(clientCompiler, { publicPath, https, host }) {
       app.use(cors());
       // Redirect `.min.(js|css)` to `.(js|css)`
       app.use(redirectMiddleware(host, project.servers.cdn.port));
-      // This lets us fetch source contents from webpack for the error overlay
-      // app.use(evalSourceMapMiddleware(server));
-      // This lets us open files from the runtime error overlay.
-      // app.use(errorOverlayMiddleware());
       // https://github.com/zeit/serve-handler
       app.use(async (req, res) => {
         await serverHandler(req, res, {
