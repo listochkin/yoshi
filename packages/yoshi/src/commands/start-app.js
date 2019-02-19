@@ -37,7 +37,7 @@ const {
   createDevServer,
   waitForCompilation,
 } = require('../webpack-utils');
-const Server = require('./utils/runServer');
+const Server = require('../server-process');
 
 const host = '0.0.0.0';
 

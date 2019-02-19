@@ -2,7 +2,7 @@ const chalk = require('chalk');
 const stream = require('stream');
 const waitPort = require('wait-port');
 const child_process = require('child_process');
-const { PORT } = require('../../constants');
+const { PORT } = require('./constants');
 
 function serverLogPrefixer() {
   return new stream.Transform({
