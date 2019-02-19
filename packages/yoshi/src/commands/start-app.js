@@ -17,12 +17,8 @@ if (cliArgs.production) {
 
 const path = require('path');
 const fs = require('fs-extra');
-const stream = require('stream');
-const child_process = require('child_process');
 const chalk = require('chalk');
-const waitPort = require('wait-port');
 const openBrowser = require('react-dev-utils/openBrowser');
-const launchEditor = require('react-dev-utils/launchEditor');
 const chokidar = require('chokidar');
 const project = require('yoshi-config');
 const {
@@ -42,15 +38,7 @@ const {
   waitForServerToStart,
   waitForCompilation,
 } = require('../webpack-utils');
-
-function serverLogPrefixer() {
-  return new stream.Transform({
-    transform(chunk, encoding, callback) {
-      this.push(`${chalk.greenBright('[SERVER]')}: ${chunk.toString()}`);
-      callback();
-    },
-  });
-}
+const Server = require('./utils/runServer');
 
 const https = cliArgs.https || project.servers.cdn.ssl;
 
@@ -107,27 +95,18 @@ module.exports = async () => {
 
   // Start up server compilation
   let serverProcess;
-  let response;
-
-  async function send({ stats }) {
-    serverProcess.send({});
-
-    return new Promise((resolve, reject) => {
-      response = { resolve, reject, stats };
-    });
-  }
 
   serverCompiler.watch({ 'info-verbosity': 'none' }, (error, stats) => {
     // If the spawned server process has died, start a new one
-    if (serverProcess && serverProcess.exitCode !== null) {
-      startServerProcess();
+    if (serverProcess && serverProcess.child.exitCode !== null) {
+      serverProcess.restart();
     }
     // If it's alive, send it a message to trigger HMR
     else {
       // If there are no errors and the server can be refreshed:
       // Wait for server to be ready before sending a signal
       if (serverProcess && !error && !stats.hasErrors()) {
-        send({ stats }).then(() => listener({ stats }));
+        serverProcess.send({}).then(() => listener({ stats }));
       } else {
         // Otherwise, just send the signal immediately
         listener({ stats });
@@ -165,57 +144,12 @@ module.exports = async () => {
     process.exit(1);
   }
 
-  // Start up the user's server
-  const inspectArg = process.argv.find(arg => arg.includes('--debug'));
-
-  const startServerProcess = () => {
-    serverProcess = child_process.fork(cliArgs.server, {
-      stdio: 'pipe',
-      execArgv: [inspectArg]
-        .filter(Boolean)
-        .map(arg => arg.replace('debug', 'inspect')),
-      env: {
-        ...process.env,
-        NODE_ENV: 'development',
-        PORT,
-      },
-    });
-
-    serverProcess.stdout.pipe(serverLogPrefixer()).pipe(process.stdout);
-    serverProcess.stderr.pipe(serverLogPrefixer()).pipe(process.stderr);
-
-    serverProcess.on('message', async ({ success }) => {
-      if (!success) {
-        serverProcess.kill();
-
-        await new Promise(resolve =>
-          setInterval(() => {
-            if (serverProcess.killed) {
-              resolve();
-            }
-          }, 100),
-        );
-
-        startServerProcess();
-
-        waitPort({
-          port: PORT,
-          output: 'silent',
-          timeout: 20000,
-        }).then(() => {
-          response.resolve({ stats: response.stats });
-        });
-      } else {
-        response.resolve({ stats: response.stats });
-      }
-    });
-  };
-
-  startServerProcess();
+  serverProcess = new Server({ serverFilePath: cliArgs.server });
 
   ['SIGINT', 'SIGTERM'].forEach(sig => {
     process.on(sig, () => {
-      serverProcess.kill();
+      // serverProcess.kill();
+      serverProcess.end();
       devServer.close();
       process.exit();
     });
@@ -225,29 +159,6 @@ module.exports = async () => {
 
   // Once it started, open up the browser
   openBrowser(`http://localhost:${PORT}`);
-
-  console.log(
-    `  Press ${chalk.cyan('e')} to open this project on your favorite editor`,
-  );
-  console.log();
-
-  const stdin = process.stdin;
-
-  stdin.setRawMode(true);
-
-  stdin.resume();
-
-  stdin.setEncoding('utf8');
-
-  stdin.on('data', key => {
-    if (key === '\u0003') {
-      serverProcess.kill();
-      devServer.close();
-      process.exit();
-    } else if (key === 'e') {
-      launchEditor(process.cwd(), 1, 1);
-    }
-  });
 
   return {
     persistent: true,
