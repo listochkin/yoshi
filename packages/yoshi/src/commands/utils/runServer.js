@@ -38,15 +38,10 @@ module.exports = class Server {
     this.child.stderr.pipe(serverLogPrefixer()).pipe(process.stderr);
 
     this.child.on('message', this.onMessage.bind(this));
-    this.child.on('exit', this.onExit.bind(this));
   }
 
   onMessage(response) {
     response.success ? this._resolve(response) : this._reject(response);
-  }
-
-  onExit() {
-    // currently we do nothing
   }
 
   end() {
