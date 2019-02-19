@@ -105,7 +105,7 @@ module.exports = async () => {
   });
 
   serverCompiler.watch({ 'info-verbosity': 'none' }, async (error, stats) => {
-    // If the spawned server process has died, start a new one
+    // If the spawned server process has died, restart it
     if (serverProcess.child && serverProcess.child.exitCode !== null) {
       await serverProcess.restart();
     }
@@ -113,19 +113,21 @@ module.exports = async () => {
     else {
       const jsonStats = stats.toJson();
 
-      // If there are no errors and the server can be refreshed:
-      // Wait for server to be ready before sending a signal
+      // If there are no errors and the server can be refreshed
+      // then send it a signal and wait for a responsne
       if (serverProcess.child && !error && !stats.hasErrors()) {
         const { success } = await serverProcess.send({});
 
+        // HMR wasn't successful, restart the server process
         if (!success) {
           await serverProcess.restart();
         }
 
+        // Send the browser an instruction to refresh
         await devServer.send('hash', jsonStats.hash);
         await devServer.send('ok');
       } else {
-        // Otherwise, just send the signal immediately
+        // If there are errors, show them on the browser
         if (jsonStats.errors.length > 0) {
           await devServer.send('errors', jsonStats.errors);
         } else if (jsonStats.warnings.length > 0) {
