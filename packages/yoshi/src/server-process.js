@@ -63,15 +63,17 @@ module.exports = class Server {
   }
 
   async restart() {
-    this.child.kill();
+    if (this.child.exitCode === null) {
+      this.child.kill();
 
-    await new Promise(resolve =>
-      setInterval(() => {
-        if (this.child.killed) {
-          resolve();
-        }
-      }, 100),
-    );
+      await new Promise(resolve =>
+        setInterval(() => {
+          if (this.child.killed) {
+            resolve();
+          }
+        }, 100),
+      );
+    }
 
     await this.initialize();
   }
