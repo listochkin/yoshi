@@ -194,13 +194,6 @@ connection.onmessage = function(event) {
     case 'errors':
       handleErrors(message.data);
       break;
-    case 'output':
-      console.log(
-        `%c[SERVER] %c${message.data.replace(/\n$/, '')}`,
-        'color: green',
-        'color: black',
-      );
-      break;
     default:
     // Do nothing.
   }

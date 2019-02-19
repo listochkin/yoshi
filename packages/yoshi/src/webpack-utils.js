@@ -12,7 +12,6 @@ const { redirectMiddleware } = require('../src/tasks/cdn/server-api');
 const WebpackDevServer = require('webpack-dev-server');
 // const errorOverlayMiddleware = require('react-dev-utils/errorOverlayMiddleware');
 // const evalSourceMapMiddleware = require('react-dev-utils/evalSourceMapMiddleware');
-// const webpackHotMiddleware = require('./webpackHotMiddleware');
 
 const isInteractive = process.stdout.isTTY;
 
@@ -168,7 +167,7 @@ function createDevServer(clientCompiler, { publicPath, https, host }) {
     https,
     // The server should be accessible externally
     host,
-    overlay: false,
+    overlay: true,
     before(app) {
       // Send cross origin headers
       app.use(cors());

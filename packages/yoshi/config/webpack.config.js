@@ -692,9 +692,9 @@ function createClientWebpackConfig({
 
   if (isHmr) {
     addEntry(clientConfig, [
-      require.resolve('./hotDevClient') + '?devServerUrl=http://localhost:3200',
-      // require.resolve('webpack/hot/dev-server'),
-      // require.resolve('webpack-dev-server/client'),
+      // require.resolve('./hotDevClient') + '?devServerUrl=http://localhost:3200',
+      require.resolve('webpack/hot/dev-server'),
+      require.resolve('webpack-dev-server/client'),
     ]);
   }
 
