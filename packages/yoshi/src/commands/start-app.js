@@ -140,7 +140,6 @@ module.exports = async () => {
   const host = '0.0.0.0';
 
   let listener = () => {};
-  let output = () => {};
 
   // Start up webpack dev server
   const devServer = await createDevServer(clientCompiler, {
@@ -148,7 +147,6 @@ module.exports = async () => {
     port: project.servers.cdn.port,
     host,
     callback: cb => (listener = cb),
-    output: cb => (output = cb),
   });
 
   // Start up webpack dev server
@@ -185,14 +183,6 @@ module.exports = async () => {
 
     serverProcess.stdout.pipe(serverLogPrefixer()).pipe(process.stdout);
     serverProcess.stderr.pipe(serverLogPrefixer()).pipe(process.stderr);
-
-    serverProcess.stdout.on('data', buffer => {
-      output({ str: buffer.toString() });
-    });
-
-    serverProcess.stderr.on('data', buffer => {
-      output({ str: buffer.toString() });
-    });
 
     serverProcess.on('message', async ({ success }) => {
       if (!success) {
