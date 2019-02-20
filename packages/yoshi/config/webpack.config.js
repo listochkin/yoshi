@@ -114,7 +114,7 @@ const entry = project.entry || project.defaultEntry;
 const possibleServerEntries = ['./server', '../test/dev-server'];
 
 // Common function to get style loaders
-function getStyleLoaders({
+const getStyleLoaders = ({
   embedCss,
   isDebug,
 
@@ -122,7 +122,7 @@ function getStyleLoaders({
   separateCss = computedSeparateCss,
   hmr = project.hmr,
   tpaStyle = project.tpaStyle,
-}) {
+}) => {
   const cssLoaderOptions = {
     camelCase: true,
     sourceMap: !!separateCss,
@@ -254,7 +254,7 @@ function getStyleLoaders({
       ],
     },
   ];
-}
+};
 
 //
 // Common configuration chunk to be used for both

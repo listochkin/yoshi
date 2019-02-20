@@ -11,6 +11,8 @@ const clientFilePath = path.join(
 
 const serverFilePath = path.join(global.scripts.testDirectory, 'src/server.js');
 
+const originalServerContent = fs.readFileSync(serverFilePath, 'utf-8');
+
 describe('hmr', () => {
   describe('client side', () => {
     it('reloads the browser on javascript changes', async () => {
@@ -46,29 +48,29 @@ describe('hmr', () => {
   });
 
   describe('server side', () => {
+    afterEach(async () => {
+      fs.writeFileSync(serverFilePath, originalServerContent);
+
+      await waitForPort(global.scripts.serverProcessPort);
+
+      await page.waitForNavigation();
+
+      expect(await page.title()).toBe('Some title');
+    });
+
     it('reloads server on changes and reloads the browser', async () => {
       await initTest('css-inclusion');
 
       expect(await page.title()).toBe('Some title');
 
-      const originalContent = fs.readFileSync(serverFilePath, 'utf-8');
-
-      const editedContent = originalContent.replace(
-        'Some title',
-        'Overridden title!',
+      fs.writeFileSync(
+        serverFilePath,
+        originalServerContent.replace('Some title', 'Overridden title!'),
       );
-
-      fs.writeFileSync(serverFilePath, editedContent);
 
       await page.waitForNavigation();
 
       expect(await page.title()).toBe('Overridden title!');
-
-      fs.writeFileSync(serverFilePath, originalContent);
-
-      await page.waitForNavigation();
-
-      expect(await page.title()).toBe('Some title');
     });
 
     it('shows error overlay on the browser', async () => {
@@ -76,19 +78,9 @@ describe('hmr', () => {
 
       expect(await page.title()).toBe('Some title');
 
-      const originalContent = fs.readFileSync(serverFilePath, 'utf-8');
-
-      const editedContent = '<<< error';
-
-      fs.writeFileSync(serverFilePath, editedContent);
+      fs.writeFileSync(serverFilePath, '<<< error');
 
       await page.waitForSelector('#webpack-dev-server-client-overlay');
-
-      fs.writeFileSync(serverFilePath, originalContent);
-
-      await page.waitForNavigation();
-
-      expect(await page.title()).toBe('Some title');
     });
 
     it('restarts server if it dies', async () => {
@@ -96,21 +88,9 @@ describe('hmr', () => {
 
       expect(await page.title()).toBe('Some title');
 
-      const originalContent = fs.readFileSync(serverFilePath, 'utf-8');
+      fs.writeFileSync(serverFilePath, 'process.exit(1);');
 
-      const editedContent = 'process.exit(1);';
-
-      fs.writeFileSync(serverFilePath, editedContent);
-
-      await waitForPortToFree(3000);
-
-      fs.writeFileSync(serverFilePath, originalContent);
-
-      await waitForPort(3000);
-
-      await page.reload();
-
-      expect(await page.title()).toBe('Some title');
+      await waitForPortToFree(global.scripts.serverProcessPort);
     });
   });
 });

@@ -37,10 +37,10 @@
     "enzyme": "~2.9.0",
     "husky": "~0.14.0",
     "lint-staged": "^7.2.2",
-    "jest-yoshi-preset": "^4.1.0-alpha",
+    "jest-yoshi-preset": "^4.0.0",
     "puppeteer": "^1.1.0",
-    "yoshi": "^4.1.0-alpha",
-    "yoshi-style-dependencies": "^4.1.0-alpha",
+    "yoshi": "^4.0.0",
+    "yoshi-style-dependencies": "^4.0.0",
     "@wix/wix-bootstrap-testkit": "latest",
     "@wix/wix-config-emitter": "latest"
   },
@@ -51,7 +51,6 @@
     "preset": "jest-yoshi-preset"
   },
   "yoshi": {
-    "experimentalServerBundle": true,
     "externals": {
       "react": "React",
       "react-dom": "ReactDOM"
