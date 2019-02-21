@@ -10,6 +10,8 @@ const fs = require('fs-extra');
 const chalk = require('chalk');
 const globby = require('globby');
 const webpack = require('webpack');
+const filesize = require('filesize');
+const { sync: gzipSize } = require('gzip-size');
 const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 const {
   createClientWebpackConfig,
@@ -17,6 +19,7 @@ const {
 } = require('../../config/webpack.config');
 const { inTeamCity: checkInTeamCity } = require('yoshi-helpers');
 const {
+  ROOT_DIR,
   SRC_DIR,
   BUILD_DIR,
   TARGET_DIR,
@@ -109,7 +112,7 @@ module.exports = async () => {
       }
 
       return resolve({
-        stats,
+        stats: stats.stats[1],
         warnings: messages.warnings,
       });
     });
@@ -122,19 +125,46 @@ module.exports = async () => {
         console.log(chalk.green('Compiled successfully.\n'));
       }
 
+      const assets = stats
+        .toJson({ all: false, assets: true })
+        .assets.filter(asset => !asset.name.endsWith('.map'))
+        .map(asset => {
+          const fileContents = fs.readFileSync(
+            path.join(STATICS_DIR, asset.name),
+          );
+          const size = gzipSize(fileContents);
+
+          return {
+            folder: path.join(
+              path.relative(ROOT_DIR, STATICS_DIR),
+              path.dirname(asset.name),
+            ),
+            name: path.basename(asset.name),
+            size: size,
+          };
+        })
+        .sort((a, b) => b.size - a.size);
+
+      assets.forEach(asset => {
+        console.log(
+          '  ' +
+            filesize(asset.size) +
+            '  ' +
+            chalk.dim(asset.folder + path.sep) +
+            chalk.cyan(asset.name),
+        );
+      });
+
+      console.log();
+      console.log(chalk.dim('    Interested in reducing your bundle size?'));
+      console.log();
       console.log(
-        stats.toString({
-          cached: false,
-          cachedAssets: false,
-          chunks: false,
-          chunkModules: false,
-          colors: true,
-          hash: false,
-          modules: false,
-          reasons: true,
-          timings: true,
-          version: false,
-        }),
+        chalk.dim('      > Try https://webpack.js.org/guides/code-splitting'),
+      );
+      console.log(
+        chalk.dim(
+          `      > If it's still large, analyze your bundle by running \`npx yoshi build --analyze\``,
+        ),
       );
 
       return {
