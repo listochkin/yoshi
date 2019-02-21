@@ -1,0 +1,15 @@
+image: node:8
+
+stages:
+  - build
+  - test
+
+cache:
+  paths:
+    - node_modules/
+
+jobs:
+  install:
+    script: npm install
+  test-unit:
+    script:  npm run test:unit
