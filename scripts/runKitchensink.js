@@ -36,7 +36,10 @@ const done = projects.reduce(async (promise, templateDirectory) => {
   try {
     await testProject({ testDirectory, templateDirectory, rootDirectory });
   } catch (error) {
+    console.log();
     console.log(error.stack);
+    console.log();
+
     return [...failures, templateDirectory];
   }
 
@@ -61,11 +64,15 @@ done
       process.exitCode = 1;
     }
   })
-  .finally(() => {
-    // Eventually, after all projects have finished, stop the local registry
-    cleanup();
-  })
   .catch(error => {
+    console.log();
     console.log(error.stack);
-    process.exit(1);
+    console.log();
+
+    process.exitCode = 1;
+  })
+  // Eventually, after all projects have finished, stop the local registry
+  .finally(() => {
+    cleanup();
+    process.exit();
   });

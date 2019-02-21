@@ -5,11 +5,11 @@ const { initTest, waitForPort, waitForPortToFree } = require('../../../utils');
 jest.setTimeout(20 * 1000);
 
 const clientFilePath = path.join(
-  global.scripts.testDirectory,
+  process.env.TEST_DIRECTORY,
   'src/components/features/css-inclusion.js',
 );
 
-const serverFilePath = path.join(global.scripts.testDirectory, 'src/server.js');
+const serverFilePath = path.join(process.env.TEST_DIRECTORY, 'src/server.js');
 
 const originalServerContent = fs.readFileSync(serverFilePath, 'utf-8');
 

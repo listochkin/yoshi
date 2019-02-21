@@ -5,7 +5,7 @@ module.exports = {
     '**/entries.test.js',
     '**/env-vars.test.js',
     '**/externals.test.js',
-    // '**/hmr.test.js',
+    '**/hmr.test.js',
     '**/loaders.test.js',
     '**/moment.test.js',
     '**/statics.test.js',
