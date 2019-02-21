@@ -8,8 +8,6 @@ const isCI = !!process.env.TEAMCITY_VERSION;
 
 const filterProject = process.env.FILTER_PROJECT;
 
-const filterConfig = process.env.FILTER_CONFIG;
-
 // Publish the entire monorepo and install everything from CI to get
 // the maximum reliability
 //
@@ -31,11 +29,14 @@ if (filterProject) {
 const done = projects.reduce(async (promise, templateDirectory) => {
   const failures = await promise;
 
-  const { testDirectory, rootDirectory } = setupProject(templateDirectory);
+  const { testDirectory, rootDirectory } = await setupProject(
+    templateDirectory,
+  );
 
   try {
     await testProject({ testDirectory, templateDirectory, rootDirectory });
   } catch (error) {
+    console.log(error.stack);
     return [...failures, templateDirectory];
   }
 

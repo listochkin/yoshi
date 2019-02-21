@@ -6,26 +6,26 @@ const { authenticateToRegistry } = require('./publishMonorepo');
 
 const isCI = !!process.env.TEAMCITY_VERSION;
 
-module.exports = templateDirectory => {
+module.exports = async templateDirectory => {
   const rootDirectory = tempy.directory();
 
   const testDirectory = path.join(rootDirectory, 'project');
 
-  fs.copySync(templateDirectory, testDirectory);
+  await fs.copy(templateDirectory, testDirectory);
 
   // Symlink modules locally for faster feedback
   if (!isCI) {
-    fs.ensureSymlinkSync(
+    await fs.ensureSymlink(
       path.join(__dirname, '../../packages/yoshi/node_modules'),
       path.join(rootDirectory, 'node_modules'),
     );
 
-    fs.ensureSymlinkSync(
+    await fs.ensureSymlink(
       path.join(__dirname, '../../packages/yoshi/bin/yoshi.js'),
       path.join(rootDirectory, 'node_modules/.bin/yoshi'),
     );
 
-    fs.ensureSymlinkSync(
+    await fs.ensureSymlink(
       path.join(__dirname, '../../packages/yoshi'),
       path.join(testDirectory, 'node_modules/yoshi'),
     );
@@ -33,7 +33,7 @@ module.exports = templateDirectory => {
     // Authenticate and install from our fake registry on CI
     authenticateToRegistry(testDirectory);
 
-    execa.shellSync('npm install', {
+    await execa.shell('npm install', {
       cwd: testDirectory,
       stdio: 'inherit',
       extendEnv: false,
@@ -44,7 +44,7 @@ module.exports = templateDirectory => {
   }
 
   // Copy mocked `node_modules`
-  fs.copySync(
+  await fs.copy(
     path.join(templateDirectory, '__node_modules__'),
     path.join(testDirectory, 'node_modules'),
   );

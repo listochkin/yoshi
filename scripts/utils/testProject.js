@@ -1,6 +1,14 @@
+const path = require('path');
 const fs = require('fs-extra');
 const execa = require('execa');
+const chalk = require('chalk');
 const Scripts = require('../../test/scripts');
+
+const ciEnv = {
+  BUILD_NUMBER: 1,
+  TEAMCITY_VERSION: 1,
+  ARTIFACT_VERSION: '1.0.0-SNAPSHOT',
+};
 
 module.exports = async ({
   templateDirectory,
@@ -8,7 +16,9 @@ module.exports = async ({
   rootDirectory,
 }) => {
   console.log();
-  console.log(`Testing ${templateDirectory}`);
+  console.log(
+    chalk.cyan.bold.underline(`> Testing ${path.basename(templateDirectory)}`),
+  );
   console.log();
 
   const options = {
@@ -20,29 +30,24 @@ module.exports = async ({
   const scripts = new Scripts(testDirectory);
 
   try {
-    console.log(`  > Building project for production`);
+    console.log(chalk.cyan(`> Building project for production`));
     console.log();
 
-    await scripts.build({
-      // enable CI env vars
-      BUILD_NUMBER: 1,
-      TEAMCITY_VERSION: 1,
-      ARTIFACT_VERSION: '1.0.0-SNAPSHOT',
-    });
+    await scripts.build(ciEnv);
 
     console.log();
-    console.log(`  > Running app's own tests`);
+    console.log(chalk.cyan(`> Running app's own tests for production`));
     console.log();
 
-    await scripts.test();
+    await scripts.test(ciEnv);
 
     console.log();
-    console.log(`  > Running production integration tests`);
+    console.log(chalk.cyan(`> Running production integration tests`));
     console.log();
 
     const serveResult = await scripts.serve();
 
-    execa.shellSync(
+    await execa.shell(
       `npx jest --config='jest.production.config.js' --no-cache --runInBand`,
       options,
     );
@@ -51,7 +56,7 @@ module.exports = async ({
 
     await serveResult.done();
 
-    console.log(`  > Starting project for development`);
+    console.log(chalk.cyan(`> Starting project for development`));
     console.log();
 
     const startResult = await scripts.start({
@@ -61,10 +66,17 @@ module.exports = async ({
       ARTIFACT_VERSION: '',
     });
 
-    console.log(`  > Running development integration tests`);
+    console.log();
+    console.log(chalk.cyan(`> Running app's own tests for development`));
     console.log();
 
-    execa.shellSync(
+    await scripts.test();
+
+    console.log();
+    console.log(chalk.cyan(`> Running development integration tests`));
+    console.log();
+
+    await execa.shell(
       `npx jest --config='jest.development.config.js' --no-cache --runInBand`,
       options,
     );
@@ -74,6 +86,6 @@ module.exports = async ({
     await startResult.done();
   } finally {
     // If any fails, or when all are done, clean this project
-    fs.removeSync(rootDirectory);
+    await fs.remove(rootDirectory);
   }
 };
