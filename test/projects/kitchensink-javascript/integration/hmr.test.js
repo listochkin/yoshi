@@ -51,7 +51,7 @@ describe('hmr', () => {
     afterEach(async () => {
       fs.writeFileSync(serverFilePath, originalServerContent);
 
-      await waitForPort(global.scripts.serverProcessPort);
+      await waitForPort(3000);
 
       await page.waitForNavigation();
 
@@ -90,7 +90,7 @@ describe('hmr', () => {
 
       fs.writeFileSync(serverFilePath, 'process.exit(1);');
 
-      await waitForPortToFree(global.scripts.serverProcessPort);
+      await waitForPortToFree(3000);
     });
   });
 });

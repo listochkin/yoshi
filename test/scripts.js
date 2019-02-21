@@ -6,7 +6,6 @@ const { waitForPort } = require('./utils');
 const terminateAsync = promisify(terminate);
 
 const defaultOptions = {
-  FORCE_COLOR: '0',
   BROWSER: 'none',
 };
 
@@ -66,7 +65,29 @@ module.exports = class Scripts {
         ...defaultOptions,
         ...env,
       },
-      // stdio: 'inherit',
+      stdio: 'inherit',
+    });
+  }
+
+  async test(env = {}) {
+    return execa('npx', ['yoshi', 'test', '--jest'], {
+      cwd: this.testDirectory,
+      env: {
+        ...defaultOptions,
+        ...env,
+      },
+      stdio: 'inherit',
+    });
+  }
+
+  async testLocal(env = {}) {
+    return execa('npx', ['yoshi', 'test', '--jest'], {
+      cwd: this.testDirectory,
+      env: {
+        ...defaultOptions,
+        ...env,
+      },
+      stdio: 'inherit',
     });
   }
 

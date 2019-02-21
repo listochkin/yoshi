@@ -1,13 +1,8 @@
-const path = require('path');
-const fs = require('fs-extra');
 const chalk = require('chalk');
-const tempy = require('tempy');
-const execa = require('execa');
 const globby = require('globby');
-const {
-  publishMonorepo,
-  authenticateToRegistry,
-} = require('./utils/publishMonorepo');
+const { publishMonorepo } = require('./utils/publishMonorepo');
+const setupProject = require('./utils/setupProject');
+const testProject = require('./utils/testProject');
 
 const isCI = !!process.env.TEAMCITY_VERSION;
 
@@ -33,108 +28,43 @@ if (filterProject) {
   });
 }
 
-try {
-  projects.forEach(templateDirectory => {
-    console.log(`Testing ${templateDirectory}`);
-    console.log();
+const done = projects.reduce(async (promise, templateDirectory) => {
+  const failures = await promise;
 
-    const rootDirectory = tempy.directory();
+  const { testDirectory, rootDirectory } = setupProject(templateDirectory);
 
-    const testDirectory = path.join(rootDirectory, 'project');
+  try {
+    await testProject({ testDirectory, templateDirectory, rootDirectory });
+  } catch (error) {
+    return [...failures, templateDirectory];
+  }
 
-    fs.copySync(templateDirectory, testDirectory);
+  return failures;
+}, Promise.resolve([]));
 
-    // Symlink modules locally for faster feedback
-    if (!isCI) {
-      fs.ensureSymlinkSync(
-        path.join(__dirname, '../packages/yoshi/node_modules'),
-        path.join(rootDirectory, 'node_modules'),
-      );
+done
+  .then(failures => {
+    if (failures.length > 0) {
+      console.log();
+      console.log(chalk.red('Test failed!'));
+      console.log();
+      console.log('Check the following failed test runs:');
+      console.log();
 
-      fs.ensureSymlinkSync(
-        path.join(__dirname, '../packages/yoshi/bin/yoshi.js'),
-        path.join(rootDirectory, 'node_modules/.bin/yoshi'),
-      );
-
-      fs.ensureSymlinkSync(
-        path.join(__dirname, '../packages/yoshi'),
-        path.join(testDirectory, 'node_modules/yoshi'),
-      );
-    } else {
-      // Authenticate and install from our fake registry on CI
-      authenticateToRegistry(testDirectory);
-
-      execa.shellSync('npm install', {
-        cwd: testDirectory,
-        stdio: 'inherit',
-        extendEnv: false,
-        env: {
-          PATH: process.env.PATH,
-        },
-      });
-    }
-
-    // Copy mocked `node_modules`
-    fs.copySync(
-      path.join(templateDirectory, '__node_modules__'),
-      path.join(testDirectory, 'node_modules'),
-    );
-
-    const options = {
-      stdio: 'inherit',
-      env: { ...process.env, TEST_DIRECTORY: testDirectory },
-      cwd: templateDirectory,
-    };
-
-    // Find all Jest configs
-    let configs = globby.sync(path.join(templateDirectory, 'jest.*.config.js'));
-
-    if (filterConfig) {
-      configs = configs.filter(configPath => {
-        return configPath.includes(filterConfig);
-      });
-    }
-
-    const failures = [];
-
-    // Run them one by one
-    try {
-      configs.forEach(configPath => {
-        console.log(`  > Running tests for ${configPath}`);
-        console.log();
-
-        try {
-          execa.shellSync(
-            `npx jest --config='${configPath}' --no-cache --runInBand`,
-            options,
-          );
-        } catch (error) {
-          failures.push(configPath);
-        }
-
-        console.log();
+      failures.forEach(configPath => {
+        console.log(`  - ${configPath}`);
       });
 
-      if (failures.length > 0) {
-        console.log(chalk.red('Test failed!'));
-        console.log();
-        console.log('Check the following failed test runs:');
-        console.log();
+      console.log();
 
-        failures.forEach(configPath => {
-          console.log(`  - ${configPath}`);
-        });
-
-        console.log();
-
-        process.exitCode = 1;
-      }
-    } finally {
-      // If any fails, or when all are done, clean this project
-      fs.removeSync(rootDirectory);
+      process.exitCode = 1;
     }
+  })
+  .finally(() => {
+    // Eventually, after all projects have finished, stop the local registry
+    cleanup();
+  })
+  .catch(error => {
+    console.log(error.stack);
+    process.exit(1);
   });
-} finally {
-  // Eventually, after all projects have finished, stop the local registry
-  cleanup();
-}

@@ -74,9 +74,7 @@ async function waitForPort(port, { timeout = 20000 } = {}) {
 }
 
 const initTest = async feature => {
-  await page.goto(
-    `http://localhost:${global.scripts.serverProcessPort}/${feature}`,
-  );
+  await page.goto(`http://localhost:3000/${feature}`);
 };
 
 function isPortTaken(port) {
