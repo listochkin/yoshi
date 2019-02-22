@@ -17,7 +17,9 @@ module.exports = async ({
 }) => {
   console.log();
   console.log(
-    chalk.cyan.bold.underline(`> Testing ${path.basename(templateDirectory)}`),
+    chalk.cyan.bold(
+      `> Testing ${chalk.underline(path.basename(templateDirectory))}`,
+    ),
   );
   console.log();
 
