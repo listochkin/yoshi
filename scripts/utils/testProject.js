@@ -54,10 +54,9 @@ module.exports = async ({
       options,
     );
 
-    console.log();
-
     await serveResult.done();
 
+    console.log();
     console.log(chalk.cyan(`> Starting project for development`));
     console.log();
 
@@ -83,9 +82,9 @@ module.exports = async ({
       options,
     );
 
-    console.log();
-
     await startResult.done();
+
+    console.log();
   } finally {
     // If any fails, or when all are done, clean this project
     await fs.remove(rootDirectory);

@@ -80,17 +80,6 @@ module.exports = class Scripts {
     });
   }
 
-  async testLocal(env = {}) {
-    return execa('npx', ['yoshi', 'test', '--jest'], {
-      cwd: this.testDirectory,
-      env: {
-        ...defaultOptions,
-        ...env,
-      },
-      stdio: 'inherit',
-    });
-  }
-
   async serve() {
     const staticsServerPort = 3200;
     const appServerProcessPort = 3000;
