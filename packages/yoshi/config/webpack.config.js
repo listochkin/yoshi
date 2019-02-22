@@ -214,7 +214,6 @@ const getStyleLoaders = ({
               // https://github.com/bholloway/resolve-url-loader
               {
                 loader: 'resolve-url-loader',
-                options: { attempts: 1 },
               },
             ]
           : [

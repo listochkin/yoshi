@@ -122,12 +122,12 @@ module.exports = async () => {
 
   const clientOptimizedStats = webpackStats.stats[1];
 
+  // Calculate assets sizes
   const assets = clientOptimizedStats
     .toJson({ all: false, assets: true })
     .assets.filter(asset => !asset.name.endsWith('.map'))
     .map(asset => {
       const fileContents = fs.readFileSync(path.join(STATICS_DIR, asset.name));
-      const size = gzipSize(fileContents);
 
       return {
         folder: path.join(
@@ -135,18 +135,21 @@ module.exports = async () => {
           path.dirname(asset.name),
         ),
         name: path.basename(asset.name),
-        size: size,
+        gzipSize: gzipSize(fileContents),
+        size: asset.size,
       };
     })
-    .sort((a, b) => b.size - a.size);
+    .sort((a, b) => b.gzipSize - a.gzipSize);
 
+  // Print build result nicely
   assets.forEach(asset => {
     console.log(
       '  ' +
         filesize(asset.size) +
         '  ' +
-        chalk.dim(asset.folder + path.sep) +
-        chalk.cyan(asset.name),
+        `(${filesize(asset.gzipSize)} GZIP)` +
+        '  ' +
+        `${chalk.dim(asset.folder + path.sep)}${chalk.cyan(asset.name)}`,
     );
   });
 
