@@ -93,88 +93,76 @@ module.exports = async () => {
     serverConfig,
   ]);
 
-  return new Promise((resolve, reject) => {
-    compiler.run(async (err, stats) => {
-      if (err) {
-        return reject(err);
-      }
+  const webpackStats = await new Promise((resolve, reject) => {
+    compiler.run((err, stats) => (err ? reject(err) : resolve(stats)));
+  });
 
-      const messages = formatWebpackMessages(stats.toJson({}, true));
+  const messages = formatWebpackMessages(webpackStats.toJson({}, true));
 
-      if (messages.errors.length) {
-        // Only keep the first error. Others are often indicative
-        // of the same problem, but confuse the reader with noise.
-        if (messages.errors.length > 1) {
-          messages.errors.length = 1;
-        }
+  if (messages.errors.length) {
+    // Only keep the first error. Others are often indicative
+    // of the same problem, but confuse the reader with noise.
+    if (messages.errors.length > 1) {
+      messages.errors.length = 1;
+    }
 
-        return reject(new Error(messages.errors.join('\n\n')));
-      }
+    const error = new Error(messages.errors.join('\n\n'));
 
-      return resolve({
-        stats: stats.stats[1],
-        warnings: messages.warnings,
-      });
-    });
-  }).then(
-    ({ stats, warnings }) => {
-      if (warnings.length) {
-        console.log(chalk.yellow('Compiled with warnings.\n'));
-        console.log(warnings.join('\n\n'));
-      } else {
-        console.log(chalk.green('Compiled successfully.\n'));
-      }
+    console.log(chalk.red('Failed to compile.\n'));
+    console.error(error.message || error);
+    process.exit(1);
+  }
 
-      const assets = stats
-        .toJson({ all: false, assets: true })
-        .assets.filter(asset => !asset.name.endsWith('.map'))
-        .map(asset => {
-          const fileContents = fs.readFileSync(
-            path.join(STATICS_DIR, asset.name),
-          );
-          const size = gzipSize(fileContents);
+  if (messages.warnings.length) {
+    console.log(chalk.yellow('Compiled with warnings.\n'));
+    console.log(messages.warnings.join('\n\n'));
+  } else {
+    console.log(chalk.green('Compiled successfully.\n'));
+  }
 
-          return {
-            folder: path.join(
-              path.relative(ROOT_DIR, STATICS_DIR),
-              path.dirname(asset.name),
-            ),
-            name: path.basename(asset.name),
-            size: size,
-          };
-        })
-        .sort((a, b) => b.size - a.size);
+  const clientOptimizedStats = webpackStats.stats[1];
 
-      assets.forEach(asset => {
-        console.log(
-          '  ' +
-            filesize(asset.size) +
-            '  ' +
-            chalk.dim(asset.folder + path.sep) +
-            chalk.cyan(asset.name),
-        );
-      });
-
-      console.log();
-      console.log(chalk.dim('    Interested in reducing your bundle size?'));
-      console.log();
-      console.log(
-        chalk.dim('      > Try https://webpack.js.org/guides/code-splitting'),
-      );
-      console.log(
-        chalk.dim(
-          `      > If it's still large, analyze your bundle by running \`npx yoshi build --analyze\``,
-        ),
-      );
+  const assets = clientOptimizedStats
+    .toJson({ all: false, assets: true })
+    .assets.filter(asset => !asset.name.endsWith('.map'))
+    .map(asset => {
+      const fileContents = fs.readFileSync(path.join(STATICS_DIR, asset.name));
+      const size = gzipSize(fileContents);
 
       return {
-        persistent: !!cliArgs.analyze,
+        folder: path.join(
+          path.relative(ROOT_DIR, STATICS_DIR),
+          path.dirname(asset.name),
+        ),
+        name: path.basename(asset.name),
+        size: size,
       };
-    },
-    error => {
-      console.log(chalk.red('Failed to compile.\n'));
-      console.error(error.message || error);
-      process.exit(1);
-    },
+    })
+    .sort((a, b) => b.size - a.size);
+
+  assets.forEach(asset => {
+    console.log(
+      '  ' +
+        filesize(asset.size) +
+        '  ' +
+        chalk.dim(asset.folder + path.sep) +
+        chalk.cyan(asset.name),
+    );
+  });
+
+  console.log();
+  console.log(chalk.dim('    Interested in reducing your bundle size?'));
+  console.log();
+  console.log(
+    chalk.dim('      > Try https://webpack.js.org/guides/code-splitting'),
   );
+  console.log(
+    chalk.dim(
+      `      > If it's still large, analyze your bundle by running \`npx yoshi build --analyze\``,
+    ),
+  );
+
+  return {
+    persistent: !!cliArgs.analyze,
+  };
 };
