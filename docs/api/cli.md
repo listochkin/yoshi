@@ -40,9 +40,9 @@ Get SIGHUP on change and manage application reboot manually
 
 Default: `false`
 
-#### `--no-test`
+#### `--with-tests`
 
-Do not spawn `npm test` after start
+Spawn `npm test` after start
 
 Default: `false`
 
