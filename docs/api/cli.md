@@ -169,7 +169,19 @@ Allow test debugging (works for mocha, jest & protractor), process won't start u
 
 Collect and output code coverage
 
+<br/>
+
 - Note that when specifying multiple flags, only the first one will be considered, so you can't compose test runners (for now).
+
+- Jest test setup:
+
+  Every other argument you'll pass to `yoshi test` will be forwarded to jest, For example:
+
+  `yoshi test --forceExit foo.spec.js`
+
+  Will run jest on `foo.spec.js` file and will apply [`forceExit`](https://jestjs.io/docs/en/cli#forceexit).
+
+  **Note:** `--debug & --debug-brk` won't be transfer to jest, but instead will be [used in yoshi for test debugging](https://jestjs.io/docs/en/troubleshooting#tests-are-failing-and-you-don-t-know-why)
 
 - Mocha tests setup:
 
@@ -196,24 +208,6 @@ Collect and output code coverage
   Specifying a custom glob for test files is possible by configuring `package.json` as described in [`yoshi.specs`](#wixspecs). The default glob matches `.spec.` files in all folders.
   <br />
   If you wish to load helpers, import them all in a file placed at `'test/setup.js'`.
-
-- Jest test setup:
-
-  You may specify a jest config object in your `package.json`, for example:
-
-  ```json
-    "jest": {
-      "testRegex": "/src/.*\\.spec\\.(ts|tsx)$"
-    }
-  ```
-
-  Every other argument you'll pass to `yoshi test --jest` will be forwarded to jest, For example:
-
-  `yoshi test --jest --forceExit foo.spec.js`
-
-  Will run jest on `foo.spec.js` file and will apply [`forceExit`](https://jestjs.io/docs/en/cli#forceexit).
-
-  **Note:** `--debug & --debug-brk` won't be transfer to jest, but instead will be [used in yoshi for test debugging](https://jestjs.io/docs/en/troubleshooting#tests-are-failing-and-you-don-t-know-why)
 
 ## lint
 
