@@ -129,11 +129,17 @@ You can specify multiple entry points in your `package.json` file. This gives th
 
 ## test
 
+Executes tests using `jest` as default.
+
 ### options
+
+#### `--jest`
+
+Run tests with Jest - this is the default
 
 #### `--mocha`
 
-Run unit tests with Mocha - this is the default
+Run unit tests with Mocha
 
 #### `--jasmine`
 
@@ -142,10 +148,6 @@ Run unit tests with Jasmine
 #### `--karma`
 
 Run tests with Karma (browser)
-
-#### `--jest`
-
-Run tests with Jest
 
 #### `--protractor`
 
@@ -166,17 +168,6 @@ Allow test debugging (works for mocha, jest & protractor), process won't start u
 #### `--coverage`
 
 Collect and output code coverage
-
-By default, this task executes both unit test (using `mocha` as default) and e2e test using `protractor`.
-Default unit test glob is `{test,app,src}/**/*.spec.+(js|ts)`. You can change this by adding the following to your package.json:
-
-```js
-yoshi: {
-  specs: {
-    node: "my-crazy-tests-glob-here";
-  }
-}
-```
 
 - Note that when specifying multiple flags, only the first one will be considered, so you can't compose test runners (for now).
 
