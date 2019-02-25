@@ -6,6 +6,9 @@
     "master"
   ],
   "bumpVersion": "patch",
+  "enabledManagers": [
+    "npm"
+  ],
   "packageRules": [
     {
       "packageNames": [
