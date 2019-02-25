@@ -18,7 +18,7 @@
     "config"
   ],
   "dependencies": {
-    "@sentry/node": "4.6.3",
+    "@sentry/node": "4.6.2",
     "@stylable/cli": "1.2.6",
     "@stylable/core": "1.0.3",
     "@stylable/jest": "1.0.3",
