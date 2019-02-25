@@ -12,7 +12,7 @@
       "precommit": "lint-staged",
       "pretest": "yoshi build",
       "test": "yoshi test --jest",
-      "posttest": "yoshi lint",
+      "posttest": "yoshi lint --fix",
       "release": "yoshi release"
     },
     "devDependencies": {
