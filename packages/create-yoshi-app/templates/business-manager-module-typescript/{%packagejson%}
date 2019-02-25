@@ -8,73 +8,74 @@
     "email": "{%authorEmail%}"
   },
   "scripts": {
-      "start": "yoshi start --entry-point ./dist/test/dev/server.js",
-      "precommit": "lint-staged",
-      "pretest": "yoshi build",
-      "test": "yoshi test --jest",
-      "posttest": "yoshi lint",
-      "release": "yoshi release"
+    "start": "yoshi start --entry-point ./dist/test/dev/server.js",
+    "precommit": "lint-staged",
+    "pretest": "yoshi build",
+    "test": "yoshi test --jest",
+    "posttest": "yoshi lint",
+    "prepush": "./scripts/validate-package-use.sh src",
+    "release": "yoshi release"
+  },
+  "devDependencies": {
+    "@types/i18next": "^8.4.5",
+    "@types/jest": "^24.0.0",
+    "@types/node": "^8.0.0",
+    "@types/prop-types": "~15.5.0",
+    "@types/react": "~15.6.0",
+    "@types/react-dom": "~15.5.0",
+    "@types/react-i18next": "^7.8.2",
+    "@wix/business-manager": "latest",
+    "@wix/business-manager-api": "latest",
+    "enzyme": "^3.7.0",
+    "enzyme-adapter-react-16": "^1.5.0",
+    "husky": "~0.14.0",
+    "jest-yoshi-preset": "^4.1.0-alpha.1",
+    "lint-staged": "^7.2.2",
+    "prop-types": "~15.5.0",
+    "puppeteer": "^1.10.0",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-module-container": "~1.0.0",
+    "react-test-renderer": "16.6.3",
+    "typescript": "~3.0.1",
+    "yoshi": "^4.1.0-alpha.1",
+    "yoshi-style-dependencies": "^4.1.0-alpha.1"
+  },
+  "dependencies": {
+    "axios": "^0.16.2",
+    "@wix/fedops-logger": "^3.0.5",
+    "i18next": "~8.4.0",
+    "i18next-xhr-backend": "~1.4.0",
+    "react-i18next": "~4.8.0",
+    "@wix/wix-axios-config": "latest"
+  },
+  "lint-staged": {
+    "linters": {
+      "*.{js,ts,tsx,scss,less}": "yoshi lint"
     },
-    "devDependencies": {
-      "@types/i18next": "^8.4.5",
-      "@types/jest": "^24.0.0",
-      "@types/node": "^8.0.0",
-      "@types/prop-types": "~15.5.0",
-      "@types/react": "~15.6.0",
-      "@types/react-dom": "~15.5.0",
-      "@types/react-i18next": "^7.8.2",
-      "@wix/business-manager": "latest",
-      "@wix/business-manager-api": "latest",
-      "enzyme": "^3.7.0",
-      "enzyme-adapter-react-16": "^1.5.0",
-      "husky": "~0.14.0",
-      "jest-yoshi-preset": "^4.1.0-alpha.1",
-      "lint-staged": "^7.2.2",
-      "prop-types": "~15.5.0",
-      "puppeteer": "^1.10.0",
-      "react": "^16.6.3",
-      "react-dom": "^16.6.3",
-      "react-module-container": "~1.0.0",
-      "react-test-renderer": "16.6.3",
-      "typescript": "~3.0.1",
-      "yoshi": "^4.1.0-alpha.1",
-      "yoshi-style-dependencies": "^4.1.0-alpha.1"
+    "ignore": [
+      "**/*.d.ts"
+    ]
+  },
+  "jest": {
+    "preset": "jest-yoshi-preset"
+  },
+  "yoshi": {
+    "entry": {
+      "{%projectName%}-module": "./module",
+      "{%projectName%}-app": "./client"
     },
-    "dependencies": {
-      "axios": "^0.16.2",
-      "@wix/fedops-logger": "^3.0.5",
-      "i18next": "~8.4.0",
-      "i18next-xhr-backend": "~1.4.0",
-      "react-i18next": "~4.8.0",
-      "@wix/wix-axios-config": "latest"
-    },
-    "lint-staged": {
-      "linters": {
-        "*.{js,ts,tsx,scss,less}": "yoshi lint"
-      },
-      "ignore": [
-        "**/*.d.ts"
-      ]
-    },
-    "jest": {
-      "preset": "jest-yoshi-preset"
-    },
-    "yoshi": {
-      "entry": {
-        "{%projectName%}-module": "./module",
-        "{%projectName%}-app": "./client"
-      },
-      "externals": {
-        "react": "React",
-        "react-dom": "ReactDOM",
-        "react-addons-css-transition-group": "React.addons.CSSTransitionGroup",
-        "lodash": "_",
-        "urijs": "URI",
-        "@wix/business-manager-api": "BusinessManagerAPI",
-        "react-module-container": "reactModuleContainer"
-      }
-    },
-    "stylelint": {
-      "extends": "stylelint-config-yoshi"
+    "externals": {
+      "react": "React",
+      "react-dom": "ReactDOM",
+      "react-addons-css-transition-group": "React.addons.CSSTransitionGroup",
+      "lodash": "_",
+      "urijs": "URI",
+      "@wix/business-manager-api": "BusinessManagerAPI",
+      "react-module-container": "reactModuleContainer"
     }
+  },
+  "stylelint": {
+    "extends": "stylelint-config-yoshi"
+  }
 }

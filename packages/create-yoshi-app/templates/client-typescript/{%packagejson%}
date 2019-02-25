@@ -13,6 +13,7 @@
     "pretest": "yoshi build",
     "test": "yoshi test --jest",
     "posttest": "yoshi lint",
+    "prepush": "./scripts/validate-package-use.sh src",
     "release": "yoshi release"
   },
   "devDependencies": {
