@@ -5,6 +5,7 @@
   "baseBranches": [
     "master"
   ],
+  "bumpVersion": "patch",
   "packageRules": [
     {
       "packageNames": [
