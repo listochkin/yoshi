@@ -5,7 +5,11 @@
   "baseBranches": [
     "master"
   ],
-  "packageNames": [
-    "yoshi"
+  "packageRules": [
+    {
+      "packageNames": [
+        "yoshi"
+      ]
+    }
   ]
 }
