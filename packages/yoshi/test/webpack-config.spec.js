@@ -159,7 +159,22 @@ describe('Webpack basic configs', () => {
         );
       });
 
-      it('should use "/" for default public path', () => {
+      it('should use "/" when inside CI (not on dev environment)', () => {
+        test
+          .setup({
+            'src/client.js': `console.log('test');`,
+          })
+          .execute('build', [], {
+            ...insideTeamCity,
+            ARTIFACT_VERSION: '',
+          });
+
+        expect(test.content('dist/statics/app.bundle.js')).to.contain(
+          `__webpack_require__.p = "/"`,
+        );
+      });
+
+      it('should use local dev-server url for public path when not on CI', () => {
         test
           .setup({
             'src/client.js': `console.log('test');`,
