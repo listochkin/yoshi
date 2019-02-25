@@ -165,7 +165,7 @@ describe('Webpack basic configs', () => {
             'src/client.js': `console.log('test');`,
           })
           .execute('build', [], {
-            ...`insideTeamCity`,
+            ...insideTeamCity,
             ARTIFACT_VERSION: '',
           });
 
